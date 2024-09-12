@@ -94,7 +94,7 @@ describe("Multisig", function () {
       const tokenTransfer = ethers.parseUnits("10000", 18)
 
       await token.transfer(contractAddress, tokenTransfer);
-      const transferTx = await multisig.transfer(amount, account1, token)
+      const transferTx = await multisig.connect(owner).transfer(amount, account1, token)
       const tx = await multisig.getTransaction(1);
 
 
@@ -105,6 +105,100 @@ describe("Multisig", function () {
       expect(await tx.tokenAddress).to.eq(token);
       expect(await tx.noOfApproval).to.eq(1);
     });
+
+    it("Should check that transfer transaction is initiated in multisig", async function () {
+      const { multisig, quorum, owner, account1, token, contractAddress } = await loadFixture(deployMultisigContract);
+      const amount = ethers.parseUnits("1", 18);
+      const tokenTransfer = ethers.parseUnits("10000", 18)
+
+      await token.transfer(contractAddress, tokenTransfer);
+      const transferTx = await multisig.connect(owner).transfer(amount, account1, token)
+      const tx = await multisig.getTransaction(1);
+      const txId = tx.id;
+      const hasSigned = multisig.checkIfAddressHasSigned(owner, txId);
+
+
+      expect(await hasSigned).to.eq(true);
+      
+    });
+
+  })
+
+  describe("Test approve transaction functionality", function () {
+    it("Should check that transfer transaction meet requirements for approval", async function () {
+      const { multisig, quorum, owner, account1, token, contractAddress } = await loadFixture(deployMultisigContract);
+      const amount = ethers.parseUnits("100", 18);
+      const tokenTransfer = ethers.parseUnits("10000", 18)
+
+      await token.transfer(contractAddress, tokenTransfer);
+      const transferTx = await multisig.connect(owner).transfer(amount, account1, token)
+      const tx = await multisig.getTransaction(1);
+      const txId = tx.id;
+      const hasSigned = multisig.checkIfAddressHasSigned(account1, txId);
+
+
+      expect(await txId).to.not.eq(0);
+      expect(await txId).to.be.eq(1)
+      expect(await token.balanceOf(contractAddress)).to.be.greaterThanOrEqual(amount);
+      expect(await tx.noOfApproval).to.be.lessThan(quorum);
+      expect(await tx.noOfApproval).to.be.eq(1);
+      expect(await multisig.getValidSigner(account1)).to.be.eq(true);
+      expect(await hasSigned).to.be.eq(false);
+      expect(await tx.isCompleted).to.be.eq(false);
+
+      const approvalTx = await multisig.connect(account1).approveTx(1);
+      const getTx = await multisig.getTransaction(1);
+      const noOfApproval = getTx.noOfApproval;
+
+      expect(await multisig.checkIfAddressHasSigned(account1, txId)).to.be.eq(true)
+      expect(await noOfApproval).to.eq(2);
+      
+    });
+
+    it("Check the approval of a transaction", async function () {
+      const { multisig, quorum, owner, account1, account2, account3, token, contractAddress } = await loadFixture(deployMultisigContract);
+      const amount = ethers.parseUnits("100", 18);
+      const tokenTransfer = ethers.parseUnits("10000", 18)
+
+      await token.transfer(contractAddress, tokenTransfer);
+      const transferTx = await multisig.connect(owner).transfer(amount, account1, token)
+      const tx = await multisig.getTransaction(1);
+      const txId = tx.id;
+      const hasSigned = multisig.checkIfAddressHasSigned(account1, txId);
+
+      const approvalTx = await multisig.connect(account1).approveTx(1);
+      const approvalTx1 = await multisig.connect(account2).approveTx(1);
+      // const approvalTx2 = await multisig.connect(account3).approveTx(1);
+
+      const getTx = await multisig.getTransaction(1);
+      const noOfApproval = getTx.noOfApproval;
+
+      expect(await noOfApproval).to.eq(3);
+      expect(await getTx.isCompleted).to.eq(true);
+
+
+    })
+
+    it("Should revert if transaction approval exceeds no of approval", async function () {
+      const { multisig, quorum, owner, account1, account2, account3, token, contractAddress } = await loadFixture(deployMultisigContract);
+      const amount = ethers.parseUnits("100", 18);
+      const tokenTransfer = ethers.parseUnits("10000", 18)
+
+      await token.transfer(contractAddress, tokenTransfer);
+      const transferTx = await multisig.connect(owner).transfer(amount, account1, token)
+      const tx = await multisig.getTransaction(1);
+      const txId = tx.id;
+      const hasSigned = multisig.checkIfAddressHasSigned(account1, txId);
+
+      const approvalTx = await multisig.connect(account1).approveTx(1);
+      const approvalTx1 = await multisig.connect(account2).approveTx(1);
+
+       
+      expect(multisig.connect(account3).approveTx(1)).to.be.revertedWith('transaction already completed');
+
+
+    })
+
 
   })
 
