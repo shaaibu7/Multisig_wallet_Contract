@@ -28,10 +28,11 @@ import {
       const { token } = await loadFixture(deployToken);
   
       const MultisigFactory = await hre.ethers.getContractFactory("MultisigFactory");
+      const Multisig = await hre.ethers.getContractFactory("Multisig");
       const multisigFactory = await MultisigFactory.deploy();
       const contractAddress = multisigFactory.getAddress();
   
-      return { multisigFactory, owner, account1, account2, account3, account4, token, contractAddress };
+      return { multisigFactory, Multisig, owner, account1, account2, account3, account4, token, contractAddress };
     }
   
     describe("Test factory contract deployment", function () {
@@ -40,11 +41,27 @@ import {
         const quorum = 3;
 
         const createMultiSigWallet = await multisigFactory.createMultisigWallet(quorum, [account1, account2, account3]);
-        const deployedContractAddress = await createMultiSigWallet.getAddress();
         const getDeployedMultisig = await multisigFactory.getMultiSigClones();
 
         expect(await getDeployedMultisig.length).to.eq(1);
-        expect(await getDeployedMultisig[0]).to.eq(createMultiSigWallet);
+      });
+  
+
+      it("Should interact with deployed smart contract", async function () {
+        const { multisigFactory, owner, account1, account2, account3, account4 } = await loadFixture(deployMultisigFactoryContract);
+        const quorum = 3;
+
+        const createMultiSigWallet = await multisigFactory.createMultisigWallet(quorum, [account1, account2, account3]);
+        const getDeployedMultisig = await multisigFactory.getMultiSigClones();
+        const deployedMultisig = await getDeployedMultisig[0];
+
+        const deployedContractInteract = await ethers.getContractAt("Multisig", deployedMultisig)
+
+        expect(await deployedContractInteract.quorum()).to.be.eq(3);
+        expect(await deployedContractInteract.noOfValidSigners()).to.be.greaterThan(1);
+        expect(await deployedContractInteract.quorum()).to.be.lessThanOrEqual(await deployedContractInteract.noOfValidSigners());
+        expect(await deployedContractInteract.noOfValidSigners()).to.eq(4);
+
 
       });
   

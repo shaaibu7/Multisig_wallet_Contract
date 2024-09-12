@@ -62,11 +62,6 @@ describe("Multisig", function () {
       expect(await multisig.noOfValidSigners()).to.eq(5);
     });
 
-    it("Should check the number of valid signers", async function () {
-      const { multisig, quorum, owner } = await loadFixture(deployMultisigContract);
-      expect(await multisig.noOfValidSigners()).to.eq(5);
-    });
-
     it("Should check if a signer is valid", async function () {
       const { multisig, quorum, owner, account1 } = await loadFixture(deployMultisigContract);
       expect(await multisig.getValidSigner(account1)).to.be.eq(true);
