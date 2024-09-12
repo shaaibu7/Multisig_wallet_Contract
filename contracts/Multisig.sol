@@ -149,4 +149,8 @@ contract Multisig {
     function getTransaction(uint8 _id) external view returns(Transaction memory){
         return transactions[_id];
     }
+
+    function checkIfAddressHasSigned(address _userAddress, uint _txId) external view returns(bool) {
+        return hasSigned[_userAddress][_txId];
+    }
 }

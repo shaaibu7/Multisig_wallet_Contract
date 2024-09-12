@@ -102,6 +102,8 @@ describe("Multisig", function () {
       expect(await tx.amount).to.eq(amount);
       expect(await tx.recipient).to.eq(account1);
       expect(await tx.sender).to.eq(owner);
+      expect(await tx.tokenAddress).to.eq(token);
+      expect(await tx.noOfApproval).to.eq(1);
     });
 
   })
