@@ -7,6 +7,9 @@ async function main() {
     const multisigFactoryContractAddress = "0xe1A722603fe84fb84510Aa936d7fAe3B831784F9";
     const multisigFactory = await ethers.getContractAt("MultisigFactory", multisigFactoryContractAddress)
 
+    // const multisigFactoryContractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+    // const multisigFactory = await ethers.getContractAt("IMultisigFactory", multisigFactoryContractAddress);
+
     // Deploying multisigWallet using factory
 
     const quorum = 3;
@@ -16,7 +19,7 @@ async function main() {
     const signer3 = "0x759CFE087931e6479Cb252Ae62a10Ea30D1d0A39";
 
 
-    const createMultiSigWallet = await multisigFactory.createMultisigWallet(
+    const createMultiSigWalletTx = await multisigFactory.createMultisigWallet(
         quorum,
         [
             signer1, 
@@ -25,7 +28,10 @@ async function main() {
         ]
     )
 
-    createMultiSigWallet.wait();
+    console.log(createMultiSigWalletTx);
+
+    createMultiSigWalletTx.wait();
+
 
     const getDeployedMultisigWallets = await multisigFactory.getMultiSigClones();
     console.log("Deployed contracts::::", getDeployedMultisigWallets);
